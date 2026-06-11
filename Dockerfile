@@ -25,16 +25,6 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Fix MPM conflict: remove event/worker symlinks, keep only prefork
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_event.load \
-          /etc/apache2/mods-enabled/mpm_worker.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load \
-    && ls /etc/apache2/mods-enabled/mpm_prefork* || a2enmod mpm_prefork
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
 # Apache: allow .htaccess overrides
 RUN echo '<Directory /var/www/html>\n\
     AllowOverride All\n\
@@ -42,6 +32,17 @@ RUN echo '<Directory /var/www/html>\n\
     Require all granted\n\
 </Directory>' > /etc/apache2/conf-available/ci4.conf \
     && a2enconf ci4
+
+# Enable mod_rewrite
+RUN a2enmod rewrite
+
+# Fix MPM: remove event and worker, ensure only prefork is active
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_event.load \
+          /etc/apache2/mods-enabled/mpm_worker.conf \
+          /etc/apache2/mods-enabled/mpm_worker.load \
+    && a2enmod mpm_prefork \
+    && apache2 -t 2>&1 | grep -v "MPM" || true
 
 # Copy application files
 COPY . /var/www/html/
