@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Gera o .env a partir das variaveis de ambiente injetadas pelo Railway
+# Gera o .env a partir das variaveis de ambiente do Railway
 cat > /var/www/html/.env << EOF
 CI_ENVIRONMENT = production
 
@@ -36,5 +36,8 @@ EOF
 
 echo ".env gerado com sucesso"
 
-# Inicia o Apache
-exec apache2-foreground
+# Inicia php-fpm em background
+php-fpm -D
+
+# Inicia nginx em foreground
+exec nginx -g 'daemon off;'

@@ -1,7 +1,8 @@
-FROM php:8.1-apache
+FROM php:8.1-fpm
 
 # System dependencies
 RUN apt-get update && apt-get install -y \
+    nginx \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
@@ -25,24 +26,27 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Apache: allow .htaccess overrides
-RUN echo '<Directory /var/www/html>\n\
-    AllowOverride All\n\
-    Options -Indexes +FollowSymLinks\n\
-    Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/ci4.conf \
-    && a2enconf ci4
-
-# Enable mod_rewrite
-RUN a2enmod rewrite
-
-# Fix MPM: remove event and worker, ensure only prefork is active
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_event.load \
-          /etc/apache2/mods-enabled/mpm_worker.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load \
-    && a2enmod mpm_prefork \
-    && apache2 -t 2>&1 | grep -v "MPM" || true
+# Nginx config for CodeIgniter 4
+RUN echo 'server {\n\
+    listen 80;\n\
+    root /var/www/html;\n\
+    index index.php index.html;\n\
+    \n\
+    location / {\n\
+        try_files $uri $uri/ /index.php?$query_string;\n\
+    }\n\
+    \n\
+    location ~ \\.php$ {\n\
+        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_index index.php;\n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        include fastcgi_params;\n\
+    }\n\
+    \n\
+    location ~ /\\.ht {\n\
+        deny all;\n\
+    }\n\
+}' > /etc/nginx/sites-available/default
 
 # Copy application files
 COPY . /var/www/html/
@@ -50,7 +54,7 @@ COPY . /var/www/html/
 # Install PHP dependencies
 RUN cd /var/www/html && composer install --no-dev --optimize-autoloader --no-interaction
 
-# Writable folder permissions
+# Permissions
 RUN chown -R www-data:www-data /var/www/html/writable \
     && chmod -R 775 /var/www/html/writable
 
@@ -58,7 +62,7 @@ RUN chown -R www-data:www-data /var/www/html/writable \
 RUN echo "upload_max_filesize = 50M\npost_max_size = 50M\nmemory_limit = 256M\nmax_execution_time = 120" \
     > /usr/local/etc/php/conf.d/custom.ini
 
-# Entrypoint script
+# Entrypoint
 RUN chmod +x /var/www/html/docker-entrypoint.sh
 
 EXPOSE 80
