@@ -3,7 +3,7 @@ set -e
 
 # Gera o .env a partir das variaveis de ambiente do Railway
 cat > /var/www/html/.env << EOF
-CI_ENVIRONMENT = production
+CI_ENVIRONMENT = development
 
 app.baseURL = '${APP_BASE_URL}'
 
