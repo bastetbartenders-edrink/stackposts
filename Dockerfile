@@ -25,9 +25,12 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Fix MPM conflict: disable event/worker, use prefork (required for mod_php)
-RUN a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork
+# Fix MPM conflict: remove event/worker symlinks, keep only prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_event.load \
+          /etc/apache2/mods-enabled/mpm_worker.conf \
+          /etc/apache2/mods-enabled/mpm_worker.load \
+    && ls /etc/apache2/mods-enabled/mpm_prefork* || a2enmod mpm_prefork
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
