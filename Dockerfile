@@ -53,8 +53,12 @@ RUN echo 'server {\n\
 # Copy application files
 COPY . /var/www/html/
 
-# Regenerate optimized autoloader (vendor already committed to repo)
-RUN cd /var/www/html && composer dump-autoload --optimize --no-dev --no-interaction
+# Install PHP dependencies
+RUN cd /var/www/html && composer install --no-dev --optimize-autoloader --no-interaction
+
+# Fix guzzle7-adapter incompatibility: replace Utils::chooseHandler() with HandlerStack::create()
+RUN sed -i 's/new HandlerStack(Utils::chooseHandler())/HandlerStack::create()/g' \
+    /var/www/html/vendor/php-http/guzzle7-adapter/src/Client.php
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html/writable \
