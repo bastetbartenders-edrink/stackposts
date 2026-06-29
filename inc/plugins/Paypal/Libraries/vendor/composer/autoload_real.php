@@ -50,7 +50,7 @@ class ComposerAutoloaderInit5536b90d10e1dd2da999d31b6d23e461
             }
         }
 
-        $loader->register(true);
+        $loader->register(false);
 
         return $loader;
     }

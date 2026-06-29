@@ -50,7 +50,7 @@ class ComposerAutoloaderInit92f87a3d4bea435ba76dded6198df260
             }
         }
 
-        $loader->register(true);
+        $loader->register(false);
 
         if ($useStaticLoader) {
             $includeFiles = Composer\Autoload\ComposerStaticInit92f87a3d4bea435ba76dded6198df260::$files;

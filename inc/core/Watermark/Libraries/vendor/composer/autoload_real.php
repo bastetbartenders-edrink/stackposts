@@ -45,7 +45,7 @@ class ComposerAutoloaderInit1208083e2995e1870795645506380f58
             }
         }
 
-        $loader->register(true);
+        $loader->register(false);
 
         if ($useStaticLoader) {
             $includeFiles = Composer\Autoload\ComposerStaticInit1208083e2995e1870795645506380f58::$files;
