@@ -53,8 +53,8 @@ RUN echo 'server {\n\
 # Copy application files
 COPY . /var/www/html/
 
-# Install PHP dependencies
-RUN cd /var/www/html && composer install --no-dev --optimize-autoloader --no-interaction
+# Regenerate optimized autoloader (vendor already committed to repo)
+RUN cd /var/www/html && composer dump-autoload --optimize --no-dev --no-interaction
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html/writable \
