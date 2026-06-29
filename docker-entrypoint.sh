@@ -38,12 +38,13 @@ echo ".env gerado com sucesso"
 
 # Importa o banco de dados na primeira inicialização
 echo "Verificando banco de dados..."
-DB_CHECK=$(mysql -h "${MYSQLHOST}" -P "${MYSQLPORT}" -u "${MYSQLUSER}" -p"${MYSQLPASSWORD}" "${MYSQLDATABASE}" -e "SHOW TABLES LIKE 'sp_users';" 2>/dev/null | grep -c sp_users || true)
+MYSQL_CMD="mysql --skip-ssl -h ${MYSQLHOST} -P ${MYSQLPORT} -u ${MYSQLUSER} -p${MYSQLPASSWORD} ${MYSQLDATABASE}"
+
+DB_CHECK=$(${MYSQL_CMD} -e "SHOW TABLES LIKE 'sp_users';" 2>/dev/null | grep -c sp_users || true)
 
 if [ "$DB_CHECK" -eq "0" ]; then
     echo "Banco vazio — importando DATABASE.sql..."
-    mysql -h "${MYSQLHOST}" -P "${MYSQLPORT}" -u "${MYSQLUSER}" -p"${MYSQLPASSWORD}" "${MYSQLDATABASE}" < /var/www/html/DATABASE.sql
-    echo "Banco importado com sucesso!"
+    ${MYSQL_CMD} < /var/www/html/DATABASE.sql && echo "Banco importado com sucesso!" || echo "Aviso: erro ao importar banco."
 else
     echo "Banco já configurado — pulando importação."
 fi
